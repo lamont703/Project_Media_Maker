@@ -7,7 +7,7 @@ import fs from 'fs';
 import { Veo2Animator } from './veo2-animator.js';
 
 // Set API key as environment variable for SDK to pick up
-const API_KEY = process.env.API_KEY || 'AIzaSyCzlf927zj6mFV0Pq9V5wiO0vWf_2VkGGA';
+const API_KEY = process.env.API_KEY || //use your gemini api key here as a string;
 process.env.GOOGLE_API_KEY = API_KEY;
 
 const __filename = fileURLToPath(import.meta.url);
@@ -54,7 +54,7 @@ const upload = multer({
 // Initialize Veo2Animator with your API key (Gemini API uses API keys directly!)
 const animator = new Veo2Animator(
   API_KEY,
-  process.env.PROJECT_ID || 'gen-lang-client-0225653171', // Not used by Gemini API but kept for compatibility
+  process.env.PROJECT_ID || //use your google projectid here as a string, // Not used by Gemini API but kept for compatibility
   process.env.LOCATION || 'us-central1' // Not used by Gemini API but kept for compatibility
 );
 
