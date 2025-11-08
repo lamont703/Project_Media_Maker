@@ -16,6 +16,14 @@
         </header>
 
         <main>
+            <!-- Tab Navigation -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="animate">Animate Image</button>
+                <button class="tab-btn" data-tab="extend">Extend Video</button>
+            </div>
+
+            <!-- Animate Image Tab -->
+            <div class="tab-content active" id="animate-tab">
             <div class="upload-section">
                 <form id="animateForm" enctype="multipart/form-data">
                     <div class="form-group">
@@ -109,6 +117,102 @@
                     <h3>⚠️ Error</h3>
                     <p id="errorMessage"></p>
                 </div>
+            </div>
+            </div>
+
+            <!-- Extend Video Tab -->
+            <div class="tab-content" id="extend-tab">
+            <div class="upload-section">
+                <form id="extendForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="videoUpload" class="upload-label">
+                            <div class="upload-area" id="videoUploadArea">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                <p>Click to upload or drag and drop</p>
+                                <p class="file-info">MP4, MOV or AVI (MAX. 200MB)</p>
+                            </div>
+                            <input type="file" id="videoUpload" name="video" accept="video/mp4,video/mov,video/avi" required>
+                        </label>
+                        <div id="videoPreview" class="video-preview"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="extendPrompt">Extension Prompt *</label>
+                        <textarea 
+                            id="extendPrompt" 
+                            name="prompt" 
+                            rows="4" 
+                            placeholder="Describe how you want to extend the video...&#10;Example: Continue the scene with the butterfly landing on a flower as a puppy approaches"
+                            required
+                        ></textarea>
+                        <small>Describe what should happen next in the video</small>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="extendAspectRatio">Aspect Ratio</label>
+                            <select id="extendAspectRatio" name="aspectRatio">
+                                <option value="16:9">16:9 (Landscape)</option>
+                                <option value="9:16">9:16 (Portrait)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="resolution">Resolution</label>
+                            <select id="resolution" name="resolution">
+                                <option value="720p" selected>720p</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="extendSubmitBtn" class="submit-btn">
+                        <span class="btn-text">Extend Video</span>
+                        <span class="btn-loader" style="display: none;">
+                            <span class="spinner"></span>
+                            Extending...
+                        </span>
+                    </button>
+                </form>
+            </div>
+
+            <div id="extendStatusSection" class="status-section" style="display: none;">
+                <div class="status-card">
+                    <div class="status-header">
+                        <h3>Extension Status</h3>
+                    </div>
+                    <div class="status-content">
+                        <div class="status-message" id="extendStatusMessage">
+                            Processing your request...
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="extendProgressFill"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="extendResultSection" class="result-section" style="display: none;">
+                <div class="result-card">
+                    <div class="result-header">
+                        <h3>Your Extended Video</h3>
+                        <button id="extendDownloadBtn" class="download-btn">Download</button>
+                    </div>
+                    <div class="video-container">
+                        <video id="extendResultVideo" controls></video>
+                    </div>
+                </div>
+            </div>
+
+            <div id="extendErrorSection" class="error-section" style="display: none;">
+                <div class="error-card">
+                    <h3>⚠️ Error</h3>
+                    <p id="extendErrorMessage"></p>
+                </div>
+            </div>
             </div>
         </main>
 

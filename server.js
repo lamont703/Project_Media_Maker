@@ -35,6 +35,7 @@ const storage = multer.diskStorage({
   }
 });
 
+// Configure multer for image uploads
 const upload = multer({
   storage: storage,
   fileFilter: (req, file, cb) => {
@@ -49,6 +50,35 @@ const upload = multer({
     }
   },
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
+
+// Configure multer for video uploads (for extension)
+const uploadVideo = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      const uploadDir = 'uploads/videos';
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      cb(null, uploadDir);
+    },
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+  }),
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /mp4|mov|avi/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = /video/.test(file.mimetype);
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only video files (mp4, mov, avi) are allowed!'));
+    }
+  },
+  limits: { fileSize: 200 * 1024 * 1024 } // 200MB limit for videos
 });
 
 // Initialize Veo2Animator with your API key (Gemini API uses API keys directly!)
@@ -175,6 +205,85 @@ app.get('/api/video/:jobId', (req, res) => {
     res.sendFile(path.resolve(videoPath));
   } else {
     res.status(404).json({ error: 'Video not found' });
+  }
+});
+
+// Extend video endpoint
+app.post('/api/extend', uploadVideo.single('video'), async (req, res) => {
+  try {
+    console.log('\n📥 New video extension request received');
+    
+    if (!req.file) {
+      console.log('❌ Error: No video file provided');
+      return res.status(400).json({ error: 'No video file provided' });
+    }
+
+    const { prompt, aspectRatio = '16:9', resolution = '720p' } = req.body;
+
+    console.log(`📝 Extension prompt: "${prompt}"`);
+    console.log(`🎬 Settings: ${aspectRatio} aspect ratio, ${resolution} resolution`);
+    console.log(`🎥 Video: ${req.file.originalname} (${(req.file.size / 1024 / 1024).toFixed(2)} MB)`);
+
+    if (!prompt) {
+      // Clean up uploaded file
+      fs.unlinkSync(req.file.path);
+      console.log('❌ Error: Prompt is required');
+      return res.status(400).json({ error: 'Prompt is required' });
+    }
+
+    const videoPath = req.file.path;
+    const outputDir = 'outputs';
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    const outputPath = path.join(
+      outputDir,
+      `extended-${Date.now()}-${path.basename(videoPath, path.extname(videoPath))}.mp4`
+    );
+
+    const jobId = path.basename(outputPath, '.mp4');
+    console.log(`🆔 Job ID: ${jobId}`);
+    console.log(`💾 Output path: ${outputPath}`);
+    console.log('🚀 Starting video extension...\n');
+
+    // Start extension (this is async and may take time)
+    res.json({
+      status: 'processing',
+      message: 'Video extension started. This may take several minutes.',
+      jobId: jobId
+    });
+
+    // Process extension in background
+    animator.extendVideo(
+      prompt,
+      videoPath,
+      outputPath,
+      aspectRatio,
+      resolution
+    )
+      .then((resultPath) => {
+        // Clean up uploaded video after processing
+        fs.unlinkSync(videoPath);
+        console.log(`\n✅ Video extended successfully!`);
+        console.log(`📹 File: ${resultPath}`);
+        console.log(`📊 Size: ${(fs.statSync(resultPath).size / 1024 / 1024).toFixed(2)} MB\n`);
+      })
+      .catch((error) => {
+        console.error('\n❌ Video extension error:', error.message);
+        console.error('Stack:', error.stack);
+        // Clean up on error
+        if (fs.existsSync(videoPath)) {
+          fs.unlinkSync(videoPath);
+        }
+      });
+
+  } catch (error) {
+    console.error('Error:', error);
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    res.status(500).json({ error: error.message });
   }
 });
 

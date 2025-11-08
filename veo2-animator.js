@@ -190,4 +190,99 @@ export class Veo2Animator {
       throw error;
     }
   }
+
+  /**
+   * Extend a previously generated Veo video
+   * @param {string} prompt - Text prompt describing how to extend the video
+   * @param {string} videoPath - Path to the existing Veo-generated video file
+   * @param {string} outputPath - Path to save the extended video
+   * @param {string} aspectRatio - Video aspect ratio (default: "16:9")
+   * @param {string} resolution - Video resolution (default: "720p")
+   * @returns {Promise<string>} Path to the extended video
+   */
+  async extendVideo(prompt, videoPath, outputPath, aspectRatio = '16:9', resolution = '720p') {
+    console.log(`📤 Reading video file: ${videoPath}`);
+    
+    if (!fs.existsSync(videoPath)) {
+      throw new Error(`Video file not found: ${videoPath}`);
+    }
+
+    // Read and encode the video file
+    const videoBuffer = fs.readFileSync(videoPath);
+    const videoBase64 = videoBuffer.toString('base64');
+    const videoStats = fs.statSync(videoPath);
+    
+    console.log(`✅ Video encoded (${(videoBase64.length / 1024 / 1024).toFixed(2)} MB base64)`);
+    console.log(`📊 Original video size: ${(videoStats.size / 1024 / 1024).toFixed(2)} MB`);
+    
+    // Convert aspect ratio format if needed
+    const aspectRatioFormatted = aspectRatio.includes(':') ? aspectRatio : `${aspectRatio}:9`;
+
+    console.log(`🌐 Sending video extension request to Veo 3.1 API...`);
+    console.log(`📝 Extension prompt: "${prompt}"`);
+    console.log(`⚙️  Parameters: ${aspectRatioFormatted} aspect, ${resolution} resolution`);
+
+    try {
+      // Verify API key is available
+      const apiKeyFromClient = this.ai.apiClient?.getApiKey?.();
+      if (!apiKeyFromClient) {
+        console.log(`⚠️  Warning: API key not found in client, using stored key`);
+        this.ai = new GoogleGenAI({ 
+          apiKey: this.apiKey,
+          vertexai: false
+        });
+      } else {
+        console.log(`✅ API key verified in client: ${apiKeyFromClient.substring(0, 10)}...`);
+      }
+      
+      // Start video extension
+      // Note: Veo 3.1 extends videos by 7 seconds, up to 20 times
+      let operation = await this.ai.models.generateVideos({
+        model: "veo-3.1-generate-preview",
+        prompt: prompt,
+        video: {
+          videoBytes: videoBase64,
+          mimeType: "video/mp4",
+        },
+        config: {
+          aspectRatio: aspectRatioFormatted,
+          resolution: resolution,
+          number_of_videos: 1,
+        },
+      });
+
+      console.log(`✅ Video extension started`);
+      console.log(`🆔 Operation: ${operation.name || 'N/A'}`);
+
+      // Poll until complete
+      operation = await this.pollOperation(operation);
+
+      // Check if operation was successful
+      if (!operation.response || !operation.response.generatedVideos || operation.response.generatedVideos.length === 0) {
+        throw new Error('No extended video generated in response');
+      }
+
+      const videoFile = operation.response.generatedVideos[0].video;
+      console.log(`✅ Extended video data received from API`);
+
+      // Download the extended video
+      console.log(`💾 Saving extended video to: ${outputPath}`);
+      await this.downloadVideo(videoFile, outputPath);
+
+      return outputPath;
+    } catch (error) {
+      console.error(`❌ Error during video extension:`, error.message);
+      
+      // Provide helpful error messages
+      if (error.message && error.message.includes('API Key not found')) {
+        console.error(`\n🔍 Troubleshooting API Key Issues:`);
+        console.error(`   1. Verify your API key is valid: ${this.apiKey.substring(0, 10)}...${this.apiKey.substring(this.apiKey.length - 4)}`);
+        console.error(`   2. Make sure the API key has access to the Veo API`);
+        console.error(`   3. Check if the API key is enabled in Google Cloud Console`);
+        console.error(`   4. Verify the API key hasn't been restricted or revoked\n`);
+      }
+      
+      throw error;
+    }
+  }
 }

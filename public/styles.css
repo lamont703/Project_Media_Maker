@@ -51,6 +51,42 @@ header p {
     font-size: 1.1rem;
 }
 
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.tab-btn {
+    padding: 12px 24px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+    color: var(--text-primary);
+}
+
+.tab-btn.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
 main {
     background: var(--bg-card);
     border-radius: 20px;
@@ -117,6 +153,18 @@ main {
 }
 
 .image-preview img {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+}
+
+.video-preview {
+    margin-top: 20px;
+    display: none;
+}
+
+.video-preview video {
     max-width: 100%;
     max-height: 300px;
     border-radius: 12px;
