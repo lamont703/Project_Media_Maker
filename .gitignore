@@ -1,0 +1,13 @@
+node_modules/
+uploads/
+outputs/
+.env
+*.log
+.DS_Store
+
+# Large media files
+*.mp4
+*.mp3
+*.mov
+*.avi
+
